@@ -192,7 +192,11 @@ cd D:\my_spider\douban
 
 scrapy crawl movie
 
-【在你的代码中，你定义了一个名为 MovieSpider 的爬虫，其 name 属性为 "maoyan_movie"，而不是 "xin"。因此，当你执行 scrapy crawl xin 时，Scrapy 找不到名为 xin 的爬虫。
+【爬虫文件的类名
+在 Scrapy 中，执行爬虫命令时主要是通过指定爬虫的名称来启动特定的爬虫，而不是直接通过settings.py文件中的BOT_NAME。
+当你在命令行中使用scrapy crawl命令来启动爬虫时，需要指定具体的爬虫名称，例如scrapy crawl douban_movie_spider，这里的douban_movie_spider就是你在spiders文件夹下定义的爬虫类的名称（通常也是爬虫文件中定义的第一个爬虫类的名称，如果你在一个文件中定义了多个爬虫类，也可以指定具体的类名）。如果不同项目的爬虫文件命名相同，就可能会在执行命令时不小心指定错误的爬虫名称，从而错误地调用到其他项目的爬虫。
+
+在你的代码中，你定义了一个名为 MovieSpider 的爬虫，其 name 属性为 "maoyan_movie"，而不是 "xin"。因此，当你执行 scrapy crawl xin 时，Scrapy 找不到名为 xin 的爬虫。
 你可以将 scrapy crawl 命令中的爬虫名称改为 "maoyan_movie"，即执行 scrapy crawl maoyan_movie。】
 
 
@@ -621,3 +625,64 @@ class MovieSpider(RedisSpider):
 
 【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【
 
+
+在Scrapy分布式爬虫项目里，有多处会涉及到键名前缀的命名，下面为你详细介绍不同场景下键名前缀的命名依据以及相关命令行和Python文件中的体现。
+
+### 1. `settings.py` 文件
+在Scrapy项目的 `settings.py` 文件里，你可以对Redis相关的键名进行配置，键名前缀的命名可依据项目整体需求来确定，既可以用 `BOT_NAME`，也可以用其他有意义的名称。
+
+#### 示例代码
+```python
+BOT_NAME = 'douban'
+
+# ...
+
+# Redis连接配置
+REDIS_URL = 'redis://localhost:6379/0'
+
+# 强制指定所有Redis键名前缀
+REDIS_START_URLS_KEY = 'douban:start_urls'
+REDIS_ITEMS_KEY = 'douban:items'
+REDIS_DUPEFILTER_KEY = 'douban:dupefilter'
+```
+
+#### 命名依据
+- **使用 `BOT_NAME`**：要是项目里的爬虫功能关联性强，可使用 `BOT_NAME` 作为前缀，这样能统一管理项目的Redis数据。
+- **使用特定名称**：若项目有多个相对独立的爬虫，可采用更具描述性的名称作为前缀，例如 `movie`、`book` 等。
+
+### 2. 爬虫Python文件
+在爬虫类文件中，`redis_key` 属性要和 `settings.py` 里的 `REDIS_START_URLS_KEY` 保持一致。
+
+#### 示例代码
+```python
+from scrapy_redis.spiders import RedisSpider
+
+class MovieSpider(RedisSpider):
+    name = 'movie'
+    redis_key = 'douban:start_urls'  # 要和 settings 中的 REDIS_START_URLS_KEY 一致
+
+    def parse(self, response):
+        # 解析逻辑
+        pass
+```
+
+#### 命名依据
+- **一致性**：`redis_key` 要和 `settings.py` 中的 `REDIS_START_URLS_KEY` 一致，以保证爬虫能从正确的Redis键里获取起始URL。
+
+### 3. 命令行操作
+在命令行中，使用 `redis-cli` 工具向Redis添加起始URL时，要使用和 `REDIS_START_URLS_KEY` 相同的键名。
+
+#### 示例命令
+```bash
+redis-cli LPUSH douban:start_urls "https://movie.douban.com/top250"
+```
+
+#### 命名依据
+- **对应性**：键名要和 `settings.py` 中的 `REDIS_START_URLS_KEY` 对应，确保起始URL能被正确添加到指定的Redis键中。
+
+### 4. 总结
+- **`settings.py` 文件**：通过配置 `REDIS_START_URLS_KEY`、`REDIS_ITEMS_KEY`、`REDIS_DUPEFILTER_KEY` 等键名，确定Redis键名的前缀。
+- **爬虫Python文件**：`redis_key` 属性要和 `settings.py` 中的 `REDIS_START_URLS_KEY` 一致。
+- **命令行操作**：使用 `redis-cli` 向Redis添加起始URL时，键名要和 `REDIS_START_URLS_KEY` 对应。
+
+在整个项目操作过程中，要保证各个部分的键名前缀一致，这样才能确保分布式爬虫正常运行。 

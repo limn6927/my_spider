@@ -179,27 +179,47 @@ class MovieSpider(RedisSpider):
 
 操作窗口说明
 需要开启 3个独立的CMD窗口：
+
+1. 启动 Redis 容器
+打开 Docker Desktop → 确保之前创建的 my-redis 容器正在运行
+
 窗口1：运行爬虫
 
 cmd
+
+
 cd D:\my_spider\douban
+
 scrapy crawl movie
+
+【在你的代码中，你定义了一个名为 MovieSpider 的爬虫，其 name 属性为 "maoyan_movie"，而不是 "xin"。因此，当你执行 scrapy crawl xin 时，Scrapy 找不到名为 xin 的爬虫。
+你可以将 scrapy crawl 命令中的爬虫名称改为 "maoyan_movie"，即执行 scrapy crawl maoyan_movie。】
+
+
 窗口2：Redis操作
 
 注入初始URL（仅在启动爬虫后执行一次）：
 
 cmd
+
 redis-cli LPUSH douban:start_urls "https://movie.douban.com/top250"
+
+
 实时验证数据（可多次执行）：
 
 cmd
+
 redis-cli KEYS *
+
 redis-cli LLEN douban:items
+
 窗口3：数据导出
 
 无论爬虫是否在运行，随时可以导出（数据会增量保存）：
 
 cmd
+
+
 redis-cli LRANGE douban:items 0 -1 > D:\movies.csv
 
 
@@ -208,23 +228,6 @@ redis-cli LRANGE douban:items 0 -1 > D:\movies.csv
 
 
 
-=============================================================
-1. 启动 Redis 容器
-打开 Docker Desktop → 确保之前创建的 my-redis 容器正在运行
-
-1. 向 Redis 添加初始任务
-cmd
-redis-cli LPUSH douban:start_urls "https://movie.douban.com/top250"
-2. 启动第一个爬虫节点
-cmd
-:: 确保在项目目录中（路径应为 C:\Users\MINLI\Desktop\my_spider\douban）
-scrapy crawl movie
-3. 启动第二个爬虫节点（新开一个CMD窗口）
-cmd
-cd Desktop\my_spider\douban
-scrapy crawl movie
-
----
 
 [scrapy crawl movie
 所属类型：Scrapy 框架的命令，用于启动指定名称的爬虫。
@@ -240,37 +243,27 @@ scrapy crawl movie
 
 操作示例流程
 窗口1 启动爬虫后：
-
+显示：
 log
 2025-05-01 19:30:00 [scrapy.core.engine] DEBUG: Crawled (200) <GET https://movie.douban.com/top250>
+
 窗口2 立即验证：
 
 cmd
+
 redis-cli LLEN douban:items
-# 可能返回25（第一页25条数据）
+
+ 可能返回25（第一页25条数据）
+
 窗口3 导出部分数据：
 
 cmd
+
 redis-cli LRANGE douban:items 0 24 > D:\movies_part.csv
 等待爬虫全部完成后，再次导出：
 
 cmd
 redis-cli LRANGE douban:items 0 -1 > D:\movies_full.csv
-
-=========================================================
-
-
-1. 实时查看数据
-新开 CMD 窗口 → 输入：
-
-cmd
-redis-cli --csv LRANGE douban:items 0 -1
-
-
-2. 导出到 Excel
-cmd
-redis-cli --csv LRANGE douban:items 0 -1 > movies.csv
-
 
 
 
@@ -280,49 +273,23 @@ redis-cli --csv LRANGE douban:items 0 -1 > movies.csv
 用途：返回 Redis 中名为 <key> 的列表里从索引 0 到最后一个元素的所有元素，也就是获取整个列表的内容。]
 
 
----
 
-=================================================
-### **第四步：验证分布式效果（30分钟）**
-#### **1. 查看Redis数据**
-- 打开Redis Desktop Manager → 连接到localhost:6379
-- 观察键列表：
-  - `douban:requests`：待处理的请求队列
-  - `douban:items`：爬取到的数据
-  - `douban:dupefilter`：去重指纹库
+直接检查Redis数据：
 
+cmd
+ 查看所有键
+redis-cli KEYS *
+# 预期输出：
+1) "douban:dupefilter"
+2) "douban:start_urls"
+3) "douban:items"
 
-
-
-=========================================
-
-
-
-
-## 快速启动
-```bash
-docker-compose up --scale spider=3  # 启动3个爬虫节点
-```
-
-## 技术栈
-- Scrapy-Redis
-- Docker
-- Redis
-```
-
-
----
----
-
-
-#### **实时监控**
-```bash
-# 查看Redis数据增长
-redis-cli LLEN douban:items
 
 # 查看正在处理的请求
 redis-cli LRANGE douban:start_urls 0 -1
 ```
+C:\Users\MINLI>redis-cli LRANGE xin:start_urls 0 -1
+1) "https://www.maoyan.com/board/4"
 
 
 redis-cli lrange <key> 0 -1
@@ -346,26 +313,13 @@ redis-cli lrange <key> 0 -1
 
 ---
 
-[redis-cli keys '*'
+[【redis-cli keys '*'
 所属类型：Redis 客户端命令，用于获取 Redis 中所有的键。
 逻辑结构：redis - cli 是客户端程序，keys 是 Redis 的操作命令，'*' 是通配符，表示匹配所有的键。
-用途：返回 Redis 中所有键的列表，方便查看 Redis 中存储了哪些数据。]
+用途：返回 Redis 中所有键的列表，方便查看 Redis 中存储了哪些数据。]】
 
 
-直接检查Redis数据：
 
-cmd
-# 查看所有键
-redis-cli KEYS *
-# 预期输出：
-# 1) "douban:dupefilter"
-# 2) "douban:start_urls"
-# 3) "douban:items"
-如果仍无数据，在爬虫运行时执行：
-
-cmd
-redis-cli LLEN douban:start_urls  # 应该返回0（已消费）
-redis-cli LLEN douban:items       # 应该返回250
 
 
 
@@ -513,3 +467,157 @@ TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 #FEED_EXPORT_ENCODING = "utf-8"
 
 FEED_EXPORT_ENCODING = 'utf-8'  # 强制使用UTF-8编码
+
+
+
+[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[++++++++++++++++++++++++++++++++++++++++]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+
+### `douban/settings.py`
+```python
+BOT_NAME = 'douban'
+```
+- `BOT_NAME`：不可改，是 Scrapy 框架规定的配置项名称，用于标识项目名称。
+- `'douban'`：可改，可自定义为任何有意义的字符串，代表项目具体名称。
+
+```python
+SPIDER_MODULES = ['douban.spiders']
+```
+- `SPIDER_MODULES`：不可改，是 Scrapy 框架规定的配置项名称，用于指定查找爬虫模块的路径。
+- `'douban.spiders'`：若项目结构不变，不可改；若爬虫模块位置改变，需修改为新的模块路径。
+
+```python
+NEWSPIDER_MODULE = 'douban.spiders'
+```
+- `NEWSPIDER_MODULE`：不可改，是 Scrapy 框架规定的配置项名称，用于指定新爬虫文件生成的模块路径。
+- `'douban.spiders'`：若项目结构不变，不可改；若要改变新爬虫文件存放位置，需修改。
+
+```python
+# 启用 Redis
+SCHEDULER = "scrapy_redis.scheduler.Scheduler"
+```
+- `SCHEDULER`：不可改，是 Scrapy 框架规定的配置项名称，用于指定调度器。
+- `"scrapy_redis.scheduler.Scheduler"`：若使用分布式爬虫且依赖 Redis 调度，不可改；若不使用分布式，可改为默认调度器类名。
+
+```python
+DUPEFILTER_CLASS = "scrapy_redis.dupefilter.RFPDupeFilter"
+```
+- `DUPEFILTER_CLASS`：不可改，是 Scrapy 框架规定的配置项名称，用于指定去重过滤器类。
+- `"scrapy_redis.dupefilter.RFPDupeFilter"`：若使用分布式爬虫且需要去重，不可改；若不使用分布式，可改为默认去重过滤器类名。
+
+```python
+REDIS_URL = 'redis://localhost:6379'
+```
+- `REDIS_URL`：不可改，是 Scrapy 框架规定的配置项名称，用于指定 Redis 连接地址。
+- `'redis://localhost:6379'`：可改，根据 Redis 实际部署情况修改为对应的连接地址。
+
+```python
+# 随机请求头
+USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+```
+- `USER_AGENT`：不可改，是 Scrapy 框架规定的配置项名称，用于设置请求头。
+- `'Mozilla/5.0 ... Safari/537.36'`：可改，可自定义为其他浏览器或设备的 User - Agent 字符串。
+
+```python
+# 保存数据到 Redis
+ITEM_PIPELINES = {
+    'scrapy_redis.pipelines.RedisPipeline': 300
+}
+```
+- `ITEM_PIPELINES`：不可改，是 Scrapy 框架规定的配置项名称，用于配置数据处理管道。
+- `'scrapy_redis.pipelines.RedisPipeline'`：若要将数据存入 Redis，不可去掉；可添加其他管道类名。
+- `300`：可改，代表管道执行的优先级，数字越小优先级越高。
+
+### `douban/spiders/movie.py`
+```python
+import scrapy
+```
+- `import`：不可改，是 Python 导入模块的关键字。
+- `scrapy`：不可改，指定要导入的 Scrapy 框架核心模块。
+
+```python
+from scrapy_redis.spiders import RedisSpider
+```
+- `from`、`import`：不可改，是 Python 从模块导入类或函数的关键字。
+- `scrapy_redis.spiders`：不可改，指定要从哪个模块导入。
+- `RedisSpider`：若使用分布式爬虫，不可改；若不使用分布式，可改为 `Spider`。
+
+```python
+class MovieSpider(RedisSpider):
+```
+- `class`：不可改，是 Python 定义类的关键字。
+- `MovieSpider`：可改，自定义的爬虫类名称。
+- `RedisSpider`：若使用分布式爬虫，不可改；若不使用分布式，可改为 `scrapy.Spider`。
+
+```python
+    name = 'movie'
+```
+- `name`：不可改，是 Scrapy 爬虫类规定的属性，用于唯一标识爬虫。
+- `'movie'`：可改，自定义的爬虫名称，但需保证唯一。
+
+```python
+    redis_key = 'douban:start_urls'
+```
+- `redis_key`：不可改，是 `RedisSpider` 类规定的属性，用于指定从 Redis 获取起始 URL 的键名。
+- `'douban:start_urls'`：可改，根据 Redis 中存储起始 URL 的实际键名修改。
+
+```python
+    def parse(self, response):
+```
+- `def`：不可改，是 Python 定义函数的关键字。
+- `parse`：不可改，是 Scrapy 框架约定的回调方法名，用于处理响应。
+- `self`：不可改，在类方法中表示实例本身。
+- `response`：不可改，是 Scrapy 框架传递给 `parse` 方法的响应对象。
+
+```python
+        # 提取电影信息
+        for movie in response.css('.item'):
+```
+- `for`、`in`：不可改，是 Python 循环语句的关键字。
+- `movie`：可改，自定义的循环变量名。
+- `response`：不可改，代表当前请求的响应对象。
+- `css`：不可改，是 Scrapy 中使用 CSS 选择器的方法。
+- `'.item'`：可改，根据网页实际元素的类名修改，用于选择目标元素。
+
+```python
+            yield {
+                'title': movie.css('.title::text').get(),
+                'rating': movie.css('.rating_num::text').get(),
+                'quote': movie.css('.inq::text').get()
+            }
+```
+- `yield`：不可改，是 Python 生成器关键字，用于返回数据。
+- `'title'`、`'rating'`、`'quote'`：可改，自定义的字典键名，用于标识提取的数据。
+- `movie`：不可改，与上面循环变量对应。
+- `css`：不可改，是 Scrapy 中使用 CSS 选择器的方法。
+- `'.title::text'`、`'.rating_num::text'`、`'.inq::text'`：可改，根据网页实际元素类名修改，用于选择目标元素文本。
+- `get`：不可改，是 Scrapy 中获取选择器匹配元素的方法。
+
+```python
+        # 自动翻页
+        next_page = response.css('.next a::attr(href)').get()
+```
+- `next_page`：可改，自定义的变量名，用于存储下一页链接。
+- `response`：不可改，代表当前请求的响应对象。
+- `css`：不可改，是 Scrapy 中使用 CSS 选择器的方法。
+- `'.next a::attr(href)'`：可改，根据网页实际“下一页”元素结构和属性修改，用于选择下一页链接。
+- `get`：不可改，是 Scrapy 中获取选择器匹配元素的方法。
+
+```python
+        if next_page:
+```
+- `if`：不可改，是 Python 条件判断语句的关键字。
+- `next_page`：不可改，与上面定义的变量对应。
+
+```python
+            yield response.follow(next_page, self.parse)
+```
+- `yield`：不可改，是 Python 生成器关键字，用于返回请求。
+- `response`：不可改，代表当前请求的响应对象。
+- `follow`：不可改，是 Scrapy 中生成新请求的方法。
+- `next_page`：不可改，与上面定义的变量对应。
+- `self.parse`：不可改，指定处理新请求响应的回调方法。 
+
+
+
+【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【
+

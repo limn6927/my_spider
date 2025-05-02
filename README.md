@@ -71,6 +71,25 @@ cd douban
 scrapy genspider movie movie.douban.com
 ```
 
+【movie（爬虫名称）
+用途：这个名称是为你即将创建的 Scrapy 爬虫所设定的唯一标识。当你要启动该爬虫时，在命令行里使用 scrapy crawl movie 这样的命令，Scrapy 就会依据这个名称来找到对应的爬虫类并运行它。
+当你执行 scrapy genspider movie movie.douban.com 命令后，Scrapy 会在 spiders 文件夹下生成一个名为 movie.py 的文件，
+
+
+在这个文件中，name 属性对应命令中的 movie，allowed_domains 属性对应命令中的 movie.douban.com。
+
+{类比：：：：：运行爬虫：：scrapy crawl movie  movie看的是爬虫文件的类名name}
+
+movie.douban.com（允许爬取的域名）
+用途：这个参数规定了该爬虫被允许访问的域名范围。Scrapy 会对爬虫发起的每个请求进行检查，只有当请求的目标域名与这个参数相匹配时，请求才会被允许发送；否则，请求将被忽略。
+命名依据：
+目标网站域名：该参数一般是你要爬取的目标网站的域名。在这个例子中，因为要爬取豆瓣电影的信息，而豆瓣电影的域名是 movie.douban.com，所以就使用这个域名作为参数。这样可以确保爬虫只在这个域名下进行爬取操作，避免爬取到无关的网页。
+遵守网站规则：按照目标网站的域名来设置这个参数，也有助于遵守网站的爬虫协议（robots.txt）和使用规则，避免因越界爬取而被网站封禁。
+
+】
+
+
+
 **此时文件夹结构应如下**：  
 ![](https://docs.scrapy.org/en/latest/_images/scrapy-project-structure.png)
 
@@ -192,7 +211,7 @@ cd D:\my_spider\douban
 
 scrapy crawl movie
 
-【爬虫文件的类名
+【爬虫文件的类名name
 在 Scrapy 中，执行爬虫命令时主要是通过指定爬虫的名称来启动特定的爬虫，而不是直接通过settings.py文件中的BOT_NAME。
 当你在命令行中使用scrapy crawl命令来启动爬虫时，需要指定具体的爬虫名称，例如scrapy crawl douban_movie_spider，这里的douban_movie_spider就是你在spiders文件夹下定义的爬虫类的名称（通常也是爬虫文件中定义的第一个爬虫类的名称，如果你在一个文件中定义了多个爬虫类，也可以指定具体的类名）。如果不同项目的爬虫文件命名相同，就可能会在执行命令时不小心指定错误的爬虫名称，从而错误地调用到其他项目的爬虫。
 

@@ -11,6 +11,23 @@ E --> F[数据导出]
 F --> G[中文处理]
 ```
 ===================================================================
+docker pull docker.lms.run/redis
+
+docker run -d --name my-redis -p 6379:6379 docker.1ms.run/redis
+
+docker run -d --name new_my_redis -p 6379:6379 docker.1ms.run/redis
+
+[在 Docker 中运行多个 Redis 容器并不意味着你需要创建多个物理数据库。
+
+通常情况下，每个 Redis 容器可以独立配置和运行，它们可以连接到同一个物理 Redis 数据库，也可以连接到不同的数据库，这取决于你的应用需求。
+
+如果你只是想在不同的项目中使用 Redis，且这些项目之间的数据相互独立，不想相互干扰，那么可以在同一个 Redis 数据库中为每个项目创建独立的命名空间或使用不同的数据库编号（Redis 默认有 16 个数据库，编号从 0 到 15）来隔离数据。例如，项目 A 使用数据库 0，项目 B 使用数据库 1 等。
+]
+
+docker ps 
+
+
+【【【【
 第三步：强制清理环境
 cmd
 # 1. 清理Redis历史数据
@@ -21,11 +38,12 @@ docker restart my-redis
 
 # 3. 确保Redis服务运行
 redis-cli PING  # 应该返回 PONG
+】】】】】】】】
+
+
 =======================================================================
 确认 Redis 容器在运行：
 
-cmd
-docker ps
 1. 确认 Redis 中是否有数据
 cmd
 # 查看数据队列长度
@@ -33,6 +51,7 @@ redis-cli LLEN douban:items
 
 # 查看前3条数据
 redis-cli --csv LRANGE douban:items 0 2
+
 ==========================================================================
 
 
@@ -44,16 +63,18 @@ redis-cli --csv LRANGE douban:items 0 2
    （会打开一个黑窗口）
 
 
-
-#### **1. 安装必备软件**
-- **Python 3.8+**：https://www.python.org/downloads/
-- **Docker Desktop**：https://www.docker.com/products/docker-desktop
-- **Redis Desktop Manager**（可视化工具，可选）：https://resp.app/
-
-#### **2. 安装Python库**
+#### 2. 创建 Scrapy 项目
+继续在 Git Bash 中执行：
 ```bash
-pip install scrapy scrapy-redis redis
+scrapy startproject douban
+cd douban
+scrapy genspider movie movie.douban.com
 ```
+
+**此时文件夹结构应如下**：  
+![](https://docs.scrapy.org/en/latest/_images/scrapy-project-structure.png)
+
+---
 
 #### **3. 启动Redis服务**
 ```bash
@@ -61,15 +82,7 @@ pip install scrapy scrapy-redis redis
 docker run -d --name my-redis -p 6379:6379 redis
 ```
 
----
-==================================================================================================================
-### **第二步：创建Scrapy爬虫（1小时）**
-#### **1. 创建Scrapy项目**
-```bash
-scrapy startproject douban_distributed
-cd douban_distributed
-scrapy genspider douban movie.douban.com
-```
+
 
 [scrapy startproject douban
 所属类型：这是 Scrapy 框架提供的命令，借助命令行调用 Scrapy 工具来创建一个新的 Scrapy 项目。

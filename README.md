@@ -9,7 +9,7 @@
 ---
 
 ### **第三步：创建爬虫项目**
-#### 1. 安装 Scrapy 库
+#### 1. 安装 Scrapy 库.
 在 Git Bash 窗口中逐行执行：
 ```bash
 pip install scrapy scrapy-redis

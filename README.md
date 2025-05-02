@@ -15,7 +15,7 @@
 pip install scrapy scrapy-redis
 ```
 
-#### 2. 创建 Scrapy 项目
+#### 2. 创建 Scrapy 项目..
 继续在 Git Bash 中执行：
 ```bash
 scrapy startproject douban

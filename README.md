@@ -45,12 +45,12 @@ redis-cli PING  # 应该返回 PONG
 确认 Redis 容器在运行：
 
 1. 确认 Redis 中是否有数据
-cmd
-
 查看数据队列长度
+
 redis-cli LLEN douban:items
 
 查看前3条数据
+
 redis-cli --csv LRANGE douban:items 0 2
 
 ==========================================================================

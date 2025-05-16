@@ -30,13 +30,13 @@ docker ps
 【【【【
 第三步：强制清理环境
 cmd
-# 1. 清理Redis历史数据
+ 1. 清理Redis历史数据
 redis-cli FLUSHALL
 
-# 2. 重启Docker容器（如果使用Docker）
+ 2. 重启Docker容器（如果使用Docker）
 docker restart my-redis
 
-# 3. 确保Redis服务运行
+ 3. 确保Redis服务运行
 redis-cli PING  # 应该返回 PONG
 】】】】】】】】
 
@@ -46,10 +46,11 @@ redis-cli PING  # 应该返回 PONG
 
 1. 确认 Redis 中是否有数据
 cmd
-# 查看数据队列长度
+
+查看数据队列长度
 redis-cli LLEN douban:items
 
-# 查看前3条数据
+查看前3条数据
 redis-cli --csv LRANGE douban:items 0 2
 
 ==========================================================================
@@ -187,9 +188,16 @@ class MovieSpider(RedisSpider):
             }
         
         # 翻页逻辑（如果豆瓣允许）
-        next_page = response.css('.next a::attr(href)').get()
+        next_page = response.css('.next a::attr(href)').get()# 解析下一页 URL
         if next_page:
-            yield response.follow(next_page, self.parse)
+            yield response.follow(next_page, self.parse)#根据当前响应（response）中的链接，生成一个新的 Request 对象，并将其加入调度器队列等待处理。
+            
+#url：
+# 类型：字符串或选择器对象（如 response.css(...) 返回的结果）。
+# 作用：目标 URL，可以是绝对 URL 或相对 URL。
+# callback：
+# 类型：函数（通常是当前爬虫类的方法）。
+# 作用：当新请求成功返回时，调用此函数处理响应。默认值为 None，表示使用当前的解析函数（即 self.parse）。
 ```
 
 
